@@ -7,6 +7,9 @@ Watershed con OpenCV.
 
 > El resultado es educativo y no sustituye una evaluacion agronomica.
 
+El orden de trabajo compartido y los criterios para cerrar cada etapa estan en
+[`docs/PLAN_PROYECTO.md`](docs/PLAN_PROYECTO.md).
+
 ## Estado actual
 
 - Dataset publico: Potato Disease Dataset de Kaggle, licencia CC0.

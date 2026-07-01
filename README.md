@@ -1,194 +1,130 @@
 # Clasificacion de Enfermedades en Hojas de Papa
 
-Sistema de clasificacion automatica de enfermedades en hojas de papa mediante redes neuronales convolucionales (CNN) con Transfer Learning utilizando **ResNet50** y segmentacion de imagenes con el algoritmo **Watershed** (OpenCV).
+Proyecto academico de Computacion Grafica que clasifica hojas de papa como
+**tizon temprano**, **tizon tardio** u **hoja sana**. Utiliza Transfer Learning
+con ResNet50 y contiene una implementacion experimental de segmentacion HSV +
+Watershed con OpenCV.
 
-El modelo distingue entre tres estados de la planta:
+> El resultado es educativo y no sustituye una evaluacion agronomica.
 
-| Clase | Descripcion |
-|-------|-------------|
-| `Potato___Early_blight` | Tizon temprano |
-| `Potato___Late_blight` | Tizon tardio |
-| `Potato___healthy` | Hoja saludable |
+## Estado actual
 
----
+- Dataset publico: Potato Disease Dataset de Kaggle, licencia CC0.
+- Total: 2 152 imagenes (1 000 early blight, 1 000 late blight y 152 healthy).
+- Modelo entregado: `modelo_papas_resnet50.h5`.
+- Accuracy de validacion informada: 96.51 %.
+- Pendiente para la fase 2: conjunto de prueba independiente y metricas por clase.
 
-## Arquitectura General
+El 96.51 % no debe interpretarse como rendimiento garantizado en fotografias de
+campo. El modelo fue entrenado con las imagenes originales, sin aplicar la
+segmentacion Watershed a su entrada.
 
-```mermaid
-flowchart TD
-    A["Dataset Kaggle\nPotato Disease Dataset"] --> B["Descarga y extraccion\nKaggle API"]
-    B --> C["Carga de imagenes\ntf.keras.utils.image_dataset_from_directory"]
-    C --> D["Data Augmentation\nFlip, Rotation, Zoom, Contrast"]
-    D --> E["Optimizacion del pipeline\ncache + shuffle + prefetch"]
-    E --> F["Segmentacion Watershed\nOpenCV"]
-    E --> G["Entrenamiento ResNet50\nTransfer Learning"]
-    G --> H["Modelo entrenado\nmodelo_papas_resnet50.h5"]
+## Estructura
+
+```text
+PAPA-PROYECTO/
+|-- Dataset.ipynb                 Flujo exploratorio original
+|-- modelo_papas_resnet50.h5      Modelo entrenado
+|-- papa_disease/
+|   |-- config.py                 Clases, rutas y limites compartidos
+|   |-- data.py                   Carga reproducible del dataset
+|   |-- training.py               Arquitectura y entrenamiento base
+|   |-- segmentation.py           Segmentacion HSV + Watershed
+|   `-- inference.py              Validacion y contrato de prediccion
+|-- scripts/
+|   |-- train.py                  Entrada para entrenamiento
+|   `-- predict.py                Entrada para inferencia local
+|-- tests/                        Pruebas del contrato
+`-- requirements.txt              Dependencias del proyecto
 ```
 
----
+## Contrato del modelo
 
-## Arquitectura del Modelo
+### Entrada
 
-```mermaid
-flowchart TD
-    INPUT["Input\n224 x 224 x 3"] --> AUG["Data Augmentation\nRandomFlip, RandomRotation\nRandomZoom, RandomContrast"]
-    AUG --> PRE["Lambda\npreprocess_input ResNet50"]
-    PRE --> RESNET["ResNet50\nweights=imagenet\ninclude_top=False\ntrainable=False"]
-    RESNET --> GAP["GlobalAveragePooling2D"]
-    GAP --> DROP["Dropout\nrate=0.3"]
-    DROP --> DENSE["Dense\nunits=3, activation=softmax"]
-    DENSE --> OUT["Output\nEarly_blight | Late_blight | healthy"]
+- Archivo JPG, JPEG o PNG.
+- Maximo 10 MB y 25 megapixeles.
+- La imagen se decodifica como RGB y se redimensiona a 224 x 224.
+- `preprocess_input` de ResNet50 ya forma parte del modelo guardado.
+
+### Orden inmutable de las salidas
+
+| Indice | Identificador | Etiqueta mostrada |
+|---:|---|---|
+| 0 | `Potato___Early_blight` | Tizon temprano |
+| 1 | `Potato___Late_blight` | Tizon tardio |
+| 2 | `Potato___healthy` | Hoja sana |
+
+La salida de inferencia contiene `class_id`, `label`, `confidence`, las
+probabilidades de las tres clases y un aviso de uso educativo.
+
+## Instalacion
+
+Se utiliza Python 3.13 y un entorno virtual limpio. Las versiones fijadas fueron
+seleccionadas para disponer de paquetes compatibles en Windows y deben tratarse
+como una unidad al actualizarse.
+
+```bash
+python -m venv .venv
+python -m pip install -r requirements.txt
 ```
 
-**Configuracion de entrenamiento:**
+No se deben agregar al repositorio `kaggle.json`, credenciales, entornos
+virtuales, el dataset descargado ni imagenes privadas.
 
-| Parametro | Valor |
-|-----------|-------|
-| Optimizador | Adam (lr=0.0001) |
-| Funcion de perdida | sparse_categorical_crossentropy |
-| Early Stopping | patience=3, monitor=val_loss |
-| Epocas maximas | 15 |
-| Batch Size | 32 |
+Las versiones de `requirements.txt` estan fijadas para que el entorno sea
+repetible. Si se actualiza alguna dependencia, se debe volver a ejecutar toda la
+verificacion, incluida una inferencia real con el modelo.
 
----
+## Inferencia local
+
+Desde la raiz del proyecto:
+
+```bash
+python -m scripts.predict ruta/a/hoja.jpg
+```
+
+Watershed no se aplica automaticamente. Su efecto sobre la precision debe
+compararse en la fase 2 antes de incorporarlo al flujo de clasificacion.
+
+## Reproducir el entrenamiento base
+
+1. Descargar el dataset en `dataset_papa/` conservando las tres carpetas de
+   clases.
+2. Ejecutar:
+
+```bash
+python -m scripts.train
+```
+
+El flujo reproduce el split original 80/20 con semilla 123, batch de 32 y hasta
+15 epocas. Reentrenar sobrescribe el modelo si se usa la ruta predeterminada;
+se recomienda conservar una copia versionada del modelo validado.
 
 ## Segmentacion Watershed
 
-```mermaid
-flowchart TD
-    IMG["Imagen original"] --> GRAY["Escala de grises"]
-    GRAY --> OTSU["Binarizacion Otsu\nTHRESH_BINARY_INV"]
-    OTSU --> OPEN["Opening morfologico\neliminacion de ruido"]
-    OPEN --> BG["Dilatacion\nfondo seguro"]
-    OPEN --> DT["Distance Transform\nprimer plano seguro"]
-    BG --> UNKNOWN["Region desconocida\nsustraccion"]
-    DT --> UNKNOWN
-    UNKNOWN --> MARKERS["Etiquetado de marcadores\nconnectedComponents"]
-    MARKERS --> WS["Watershed\nsegmentacion final"]
-    WS --> RESULT["Contornos detectados"]
-```
+`papa_disease.segmentation.apply_watershed` recibe una imagen OpenCV en BGR y
+devuelve mascara, marcadores, contornos y hoja aislada. La mascara HSV actual fue
+diseñada para hojas verdes sobre fondos relativamente uniformes y puede fallar
+con lesiones extensas, sombras o fondos de campo.
 
-El modulo `Segmentacion.py` implementa el algoritmo Watershed de OpenCV para aislar la hoja del fondo, utilizando binarizacion de Otsu, operaciones morfologicas y transformada de distancia.
+## Verificacion
 
----
-
-## Dataset
-
-**Fuente:** [Potato Disease Dataset - Kaggle](https://www.kaggle.com/datasets/faysalmiah1721758/potato-dataset)
-**Licencia:** CC0 1.0 (Dominio Publico)
-
-| Clase | Imagenes |
-|-------|----------|
-| Potato___Early_blight | 1,000 |
-| Potato___Late_blight | 1,000 |
-| Potato___healthy | 152 |
-| **Total** | **2,152** |
-
-**Distribucion del pipeline:**
-
-| Conjunto | Imagenes | Porcentaje |
-|----------|----------|------------|
-| Entrenamiento | 1,722 | 80% |
-| Validacion | 430 | 20% |
-
----
-
-## Estructura del Proyecto
-
-```
-PAPA-PROYECTO/
-├── Dataset.ipynb                    # Notebook principal: descarga, preprocesamiento,
-│                                    # segmentacion, entrenamiento y visualizacion
-├── Entrenamiento.py                 # Script standalone del entrenamiento con ResNet50
-├── Segmentacion.py                  # Script standalone de segmentacion Watershed
-├── modelo_papas_resnet50.h5         # Modelo entrenado (pesos y arquitectura)
-├── potato-dataset-metadata.json     # Metadata del dataset (formato Croissant/MLCommons)
-└── .gitignore
-```
-
----
-
-## Tecnologias
-
-| Libreria | Uso |
-|----------|-----|
-| TensorFlow / Keras | Framework de Deep Learning, construccion y entrenamiento del modelo |
-| ResNet50 (ImageNet) | Arquitectura base preentrenada (Transfer Learning) |
-| OpenCV | Segmentacion de imagenes con algoritmo Watershed |
-| NumPy | Operaciones numericas y manipulacion de arrays |
-| Matplotlib | Visualizacion de resultados y Data Augmentation |
-| Kaggle API | Descarga automatizada del dataset |
-| Jupyter Notebook | Entorno de desarrollo interactivo |
-
----
-
-## Requisitos
-
-- Python 3.13+
-- TensorFlow
-- OpenCV (`opencv-python`)
-- NumPy
-- Matplotlib
-- Kaggle API
+Las pruebas ligeras, que no requieren TensorFlow, se ejecutan con:
 
 ```bash
-pip install tensorflow opencv-python numpy matplotlib kaggle
+python -m unittest discover -s tests -v
+python -m compileall papa_disease scripts tests
 ```
 
-Para la descarga del dataset se requiere el archivo `kaggle.json` con las credenciales de la API de Kaggle en el directorio de trabajo.
+La carga e inferencia real requieren instalar las dependencias y usar una imagen
+JPG o PNG valida.
 
----
+El archivo H5 contiene una capa Lambda heredada. Por ese motivo solo debe
+cargarse el modelo versionado y confiable del proyecto; nunca un `.h5` enviado
+por un usuario o descargado de una fuente no verificada.
 
-## Uso
+## Licencia del dataset
 
-### Notebook principal (recomendado)
-
-El archivo `Dataset.ipynb` contiene el flujo completo: descarga del dataset, preprocesamiento, Data Augmentation, segmentacion Watershed, entrenamiento y guardado del modelo.
-
-```bash
-jupyter notebook Dataset.ipynb
-```
-
-### Entrenamiento standalone
-
-```bash
-python Entrenamiento.py
-```
-
-Requiere que `train_dataset`, `validation_dataset`, `class_names` y `data_augmentation` esten definidos previamente en el entorno.
-
-### Segmentacion standalone
-
-```bash
-python Segmentacion.py
-```
-
-Requiere una imagen de prueba `papa_prueba.jpg` en el directorio de trabajo. La ruta puede modificarse en la funcion `aplicar_watershed()`.
-
----
-
-## Resultados del Entrenamiento
-
-| Epoca | Accuracy | Loss | Val Accuracy | Val Loss |
-|-------|----------|------|--------------|----------|
-| 1 | 0.5319 | 0.9528 | 0.7651 | 0.6293 |
-| 5 | 0.8682 | 0.3537 | 0.9116 | 0.2580 |
-| 10 | 0.9245 | 0.2058 | 0.9512 | 0.1660 |
-| 15 | 0.9570 | 0.1436 | 0.9651 | 0.1285 |
-
-**Mejor resultado:** Val Accuracy = **96.51%** | Val Loss = **0.1285**
-
-```mermaid
-xychart-beta
-    title "Curva de Accuracy durante el Entrenamiento"
-    x-axis ["Ep 1", "Ep 2", "Ep 3", "Ep 4", "Ep 5", "Ep 6", "Ep 7", "Ep 8", "Ep 9", "Ep 10", "Ep 11", "Ep 12", "Ep 13", "Ep 14", "Ep 15"]
-    y-axis "Accuracy" 0.5 --> 1.0
-    line [0.53, 0.69, 0.80, 0.86, 0.87, 0.90, 0.92, 0.92, 0.93, 0.92, 0.95, 0.95, 0.95, 0.95, 0.96]
-    line [0.77, 0.86, 0.88, 0.90, 0.91, 0.93, 0.93, 0.94, 0.94, 0.95, 0.96, 0.96, 0.96, 0.96, 0.97]
-```
-
----
-
-## Licencia
-
-Este proyecto utiliza el **Potato Disease Dataset** disponible en Kaggle bajo licencia **CC0 1.0 (Dominio Publico)**.
+[Potato Disease Dataset](https://www.kaggle.com/datasets/faysalmiah1721758/potato-dataset),
+publicado bajo CC0 1.0.

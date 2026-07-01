@@ -4,11 +4,18 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 MODEL_PATH = PROJECT_ROOT / "modelo_papas_resnet50.h5"
+RETRAINED_MODEL_PATH = PROJECT_ROOT / "modelo_papas_resnet50_split70_15_15.h5"
 DATASET_PATH = PROJECT_ROOT / "dataset_papa"
+SPLIT_MANIFEST_PATH = PROJECT_ROOT / "split_manifest.json"
+REPORTS_PATH = PROJECT_ROOT / "outputs" / "evaluation"
 
 IMAGE_SIZE = (224, 224)
 BATCH_SIZE = 32
 RANDOM_SEED = 123
+TRAIN_FRACTION = 0.70
+VALIDATION_FRACTION = 0.15
+TEST_FRACTION = 0.15
+UNCERTAINTY_THRESHOLD = 0.70
 
 # image_dataset_from_directory ordena alfabeticamente los directorios.
 # Este orden debe permanecer sincronizado con las tres salidas del modelo.

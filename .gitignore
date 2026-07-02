@@ -10,6 +10,5 @@ __pycache__/
 outputs/
 checkpoints/
 split_manifest.json
-modelo_papas_resnet50_split70_15_15.h5
 resultados_fase2.zip
 revision_resultados_fase2/

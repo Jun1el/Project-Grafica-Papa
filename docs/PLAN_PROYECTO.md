@@ -10,8 +10,8 @@ no sustituye un diagnostico agronomico.
 |---|---|---|
 | 1. Consolidacion | Completada | Modulos reproducibles de datos, entrenamiento, segmentacion e inferencia |
 | 2. Evaluacion confiable | Completada | Split 70/15/15, metricas por clase, matrices y comparacion Watershed |
-| 3. Demo Hugging Face | Pendiente | Interfaz Gradio para inferencia, sin entrenamiento |
-| 4. Imagenes de campo | Pendiente | Prueba de robustez fuera del dataset de laboratorio |
+| 3. Demo Hugging Face | Completada | Interfaz Gradio (`app.py`) para inferencia, sin entrenamiento |
+| 4. Imagenes de campo | En progreso | Prueba de robustez fuera del dataset de laboratorio |
 | 5. Fine-tuning | Pendiente | Ajuste controlado de capas superiores y comparacion con la linea base |
 | 6. TFLite/ONNX | Pendiente | Modelos ligeros validados contra TensorFlow |
 | 7. Flutter Android | Pendiente | Aplicacion offline con camara e inferencia local |
@@ -83,6 +83,27 @@ usuarios ni entrenar dentro de Spaces.
 Recolectar o conseguir imagenes autorizadas con luces, fondos, camaras y etapas
 de enfermedad variadas. Mantener un conjunto de campo separado y verificar las
 etiquetas con apoyo agronomico cuando sea posible.
+
+El conjunto de campo vive en `dataset_campo/` (ignorado por Git) con una
+subcarpeta por clase. La evaluacion no usa el manifiesto 70/15/15; se ejecuta
+con:
+
+```bash
+python -m scripts.evaluate_field
+```
+
+El reporte se guarda en `outputs/evaluation/field_report.json` con matriz de
+confusion, metricas por clase, cobertura del umbral y `macro_f1_present` (promedio
+solo de las clases con muestras). El avance parcial esta en
+[`RESULTADOS_FASE_4.md`](RESULTADOS_FASE_4.md).
+
+Criterios para cerrar la fase 4:
+
+- Las tres clases tienen imagenes de campo, incluida `Potato___healthy`.
+- Se descartan duplicados frente al dataset de laboratorio (mismo criterio
+  SHA-256 de `data.py`) para evitar fugas.
+- Se reporta la caida de accuracy y macro F1 frente al test de laboratorio.
+- Se documenta el origen y la licencia de cada fuente de imagenes.
 
 ### Fase 5: fine-tuning
 

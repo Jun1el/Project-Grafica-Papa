@@ -16,9 +16,13 @@ El orden de trabajo compartido y los criterios para cerrar cada etapa estan en
 - Total: 2 152 imagenes (1 000 early blight, 1 000 late blight y 152 healthy).
 - Modelo entregado: `modelo_papas_resnet50.h5`.
 - Accuracy de validacion informada: 96.51 %.
-- La fase 2 incorpora un reparto reproducible 70/15/15 y metricas por clase.
-- El modelo actual conserva solo su accuracy historica de validacion; debe
-  reentrenarse con el nuevo reparto antes de informar resultados de prueba.
+- La fase 2 fue completada con un reparto reproducible 70/15/15 y metricas por
+  clase. El modelo reentrenado obtuvo 97.83 % de accuracy y 96.65 % de macro F1
+  en test.
+- Watershed se conserva como demostracion de computacion grafica, pero no se
+  aplica al clasificador: redujo el accuracy de test a 66.25 %.
+- Las metricas y decisiones completas estan en
+  [`docs/RESULTADOS_FASE_2.md`](docs/RESULTADOS_FASE_2.md).
 
 El 96.51 % no debe interpretarse como rendimiento garantizado en fotografias de
 campo. El modelo fue entrenado con las imagenes originales, sin aplicar la

@@ -9,14 +9,20 @@ no sustituye un diagnostico agronomico.
 | Fase | Estado | Resultado |
 |---|---|---|
 | 1. Consolidacion | Completada | Modulos reproducibles de datos, entrenamiento, segmentacion e inferencia |
-| 2. Evaluacion confiable | Implementada; falta ejecucion en Colab | Split 70/15/15, metricas por clase, matrices y comparacion Watershed |
+| 2. Evaluacion confiable | Completada | Split 70/15/15, metricas por clase, matrices y comparacion Watershed |
 | 3. Demo Hugging Face | Pendiente | Interfaz Gradio para inferencia, sin entrenamiento |
 | 4. Imagenes de campo | Pendiente | Prueba de robustez fuera del dataset de laboratorio |
 | 5. Fine-tuning | Pendiente | Ajuste controlado de capas superiores y comparacion con la linea base |
 | 6. TFLite/ONNX | Pendiente | Modelos ligeros validados contra TensorFlow |
 | 7. Flutter Android | Pendiente | Aplicacion offline con camara e inferencia local |
 
-## Siguiente paso: completar la fase 2 en Colab
+## Fase 2 completada
+
+La ejecucion final en Colab con GPU fue completada el 1 de julio de 2026. El
+resultado aprobado y las decisiones tecnicas se encuentran en
+[`RESULTADOS_FASE_2.md`](RESULTADOS_FASE_2.md).
+
+## Flujo reproducible de la fase 2 en Colab
 
 No se debe evaluar el modelo historico como si perteneciera al nuevo conjunto de
 prueba. Primero hay que reentrenar usando el manifiesto 70/15/15.

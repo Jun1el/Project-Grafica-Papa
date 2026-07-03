@@ -105,6 +105,14 @@ def load_tflite_model(model_path: Path):
         
     interpreter = tf.lite.Interpreter(model_path=str(model_path))
     interpreter.allocate_tensors()
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+    if len(input_details) != 1 or len(output_details) != 1:
+        raise ValueError("El modelo TFLite debe tener una entrada y una salida")
+    if tuple(input_details[0]["shape"]) != (1, *IMAGE_SIZE, 3):
+        raise ValueError("La entrada TFLite no coincide con 224x224 RGB")
+    if tuple(output_details[0]["shape"]) != (1, len(CLASS_NAMES)):
+        raise ValueError("La salida TFLite no coincide con las tres clases")
     return interpreter
 
 
@@ -119,10 +127,18 @@ def predict_tflite(interpreter, image_rgb):
     resized = cv2.resize(image_rgb, IMAGE_SIZE, interpolation=cv2.INTER_AREA)
     batch = np.expand_dims(resized.astype("float32"), axis=0)
 
-    interpreter.set_tensor(input_details[0]['index'], batch)
+    input_dtype = input_details[0]["dtype"]
+    if input_dtype != batch.dtype:
+        raise ValueError(
+            f"El modelo TFLite espera {input_dtype}, no {batch.dtype}"
+        )
+
+    interpreter.set_tensor(input_details[0]["index"], batch)
     interpreter.invoke()
     
-    probabilities = np.asarray(interpreter.get_tensor(output_details[0]['index'])[0], dtype=float)
+    probabilities = np.asarray(
+        interpreter.get_tensor(output_details[0]["index"])[0], dtype=float
+    )
     if probabilities.shape != (len(CLASS_NAMES),):
         raise ValueError("La salida del modelo no coincide con las tres clases")
 

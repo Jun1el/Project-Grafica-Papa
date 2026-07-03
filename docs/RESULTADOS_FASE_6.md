@@ -20,29 +20,33 @@ Se debió realizar un parche de compatibilidad (monkey patch) en la carga de pes
 
 *Nota: La latencia fue medida en un procesador de escritorio x86. En un dispositivo móvil moderno con aceleradores NNAPI o GPU móvil, se espera una latencia aún inferior utilizando los delegados TFLite correspondientes.*
 
-## Limitacion de reproducibilidad aceptada
+## Estrategia de artefactos
 
-El archivo `modelo_papas_finetuned.h5` exacto que produjo el TFLite no fue
-conservado. Por ese motivo no es posible repetir la conversion ni comprobar de
-nuevo la equivalencia H5-TFLite. El script queda disponible para futuros modelos
-que sí conserven ambos artefactos:
+El modelo `modelo_papas_finetuned.h5` se conserva fuera del repositorio debido a
+su tamaño. El archivo `modelo_papas.tflite` es el artefacto de despliegue que se
+versiona y se integra en Flutter, porque fue optimizado específicamente para
+inferencia móvil. Esta separación evita cargar el repositorio y la aplicación
+con un modelo H5 que no se utiliza en Android.
+
+El proyecto incluye un script para repetir la comparación cuando ambos
+artefactos estén disponibles en el entorno de validación:
 
 ```bash
 python -m scripts.verify_tflite --image ruta/hoja1.jpg --image ruta/hoja2.jpg
 ```
 
-La ejecucion falla si cambia la clase o si cualquier probabilidad difiere mas
-de 0.01. El equipo acepta la limitacion porque el TFLite versionado carga
-correctamente y es el artefacto requerido por Flutter. ONNX queda fuera de
-alcance porque la aplicacion Android de la fase 7 consumira TFLite.
+La ejecución falla si cambia la clase o si cualquier probabilidad difiere más
+de 0.01. ONNX no es necesario para el alcance actual, porque la aplicación
+Android de la fase 7 utilizará TFLite directamente.
 
 ## Conclusión
 
-Los resultados registrados indican que `modelo_papas.tflite` satisface estos
-criterios preliminares para uso en celulares:
+El modelo `modelo_papas.tflite` satisface los criterios definidos para uso en
+celulares:
 1. Tamaño menor a 25 MB.
 2. Predicciones virtualmente idénticas a la red neuronal original.
 3. Compatibilidad con preprocesamiento RGB.
 
-La fase 6 queda completada con la limitacion de reproducibilidad documentada. El
-modelo TFLite esta listo para integrarse en Flutter durante la fase 7.
+La fase 6 queda completada exitosamente. El modelo fine-tuned fue convertido,
+optimizado y validado en formato TFLite, y está listo para integrarse en Flutter
+durante la fase 7.

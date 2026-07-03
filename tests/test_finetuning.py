@@ -1,10 +1,13 @@
 import unittest
-import tensorflow as tf
 from papa_disease.config import CLASS_NAMES, IMAGE_SIZE
 from papa_disease.training import build_model, build_finetune_model
 
 class TestFinetuning(unittest.TestCase):
     def test_build_finetune_model_freezes_and_unfreezes_correctly(self):
+        try:
+            import tensorflow as tf
+        except ImportError:
+            self.skipTest("TensorFlow no esta instalado")
         # 1. Crear el modelo base original
         model = build_model()
         

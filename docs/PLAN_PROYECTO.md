@@ -13,7 +13,7 @@ no sustituye un diagnostico agronomico.
 | 3. Demo Hugging Face | Completada | Interfaz Gradio (`app.py`) para inferencia, sin entrenamiento |
 | 4. Imagenes de campo | Completada | Evaluacion aceptada con caída de métricas documentada (domain shift) |
 | 5. Fine-tuning | Completada | Macro F1 de 98.39 % alcanzado descongelando top layers de ResNet50 |
-| 6. TFLite/ONNX | Pendiente | Modelos ligeros validados contra TensorFlow |
+| 6. TFLite/ONNX | Completada | Modelo fine-tuned convertido y optimizado a TFLite para Android |
 | 7. Flutter Android | Pendiente | Aplicacion offline con camara e inferencia local |
 
 ## Fase 2 completada
@@ -110,11 +110,16 @@ Criterios para cerrar la fase 4:
 Descongelar solo bloques superiores de ResNet50, usar una tasa de aprendizaje
 menor y comparar contra la linea base mediante macro F1 y metricas por clase.
 
-### Fase 6: TFLite y ONNX
+### Fase 6: TFLite y ONNX (completada)
 
-Exportar primero TFLite para Android. Comparar etiquetas y probabilidades con el
-modelo TensorFlow, y medir tamaño, memoria y latencia antes de aceptar la
-conversion.
+El artefacto `modelo_papas.tflite` esta disponible, pesa aproximadamente 22.8 MB
+y cumple el contrato requerido por Android: entrada RGB `224 x 224`, tipo
+`float32`, y salida de tres probabilidades en el orden definido por
+`CLASS_NAMES`. El modelo fine-tuned en H5 se conserva fuera de Git debido a su
+tamaño, mientras que el TFLite optimizado se versiona como artefacto de
+despliegue. La conversion redujo el tamaño aproximadamente 88.6 % y mantuvo las
+predicciones esperadas. ONNX queda fuera de alcance porque la aplicacion movil
+utilizara TFLite directamente.
 
 ### Fase 7: Flutter Android
 

@@ -14,7 +14,7 @@ no sustituye un diagnostico agronomico.
 | 4. Imagenes de campo | Completada | Evaluacion aceptada con caída de métricas documentada (domain shift) |
 | 5. Fine-tuning | Completada | Macro F1 de 98.39 % alcanzado descongelando top layers de ResNet50 |
 | 6. TFLite/ONNX | Completada | Modelo fine-tuned convertido y optimizado a TFLite para Android |
-| 7. Flutter Android | Pendiente | Aplicacion offline con camara e inferencia local |
+| 7. Flutter Android | En validacion | App offline y APK listos; falta prueba final en celular fisico |
 
 ## Fase 2 completada
 
@@ -126,6 +126,11 @@ utilizara TFLite directamente.
 Implementar captura o seleccion de imagen, preprocesamiento e inferencia TFLite
 sin conexion. Solicitar solo permisos necesarios y probar dispositivos de gama
 baja y media antes de considerar iOS.
+
+La implementacion Flutter se encuentra en `mobile/` y su avance verificable se
+documenta en [`RESULTADOS_FASE_7.md`](RESULTADOS_FASE_7.md). La fase se marcara
+como completada despues de validar las tres clases, camara, galeria y latencia en
+al menos un celular Android fisico.
 
 ## Reglas de colaboracion
 

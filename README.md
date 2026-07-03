@@ -23,6 +23,9 @@ El orden de trabajo compartido y los criterios para cerrar cada etapa estan en
   aplica al clasificador: redujo el accuracy de test a 66.25 %.
 - La fase 3 entrega la demo Gradio `app.py` para inferencia local o en Hugging
   Face Spaces, sin entrenamiento ni almacenamiento de imagenes de usuarios.
+- La fase 7 incluye la aplicacion Flutter Android offline en `mobile/`. El APK
+  funciona en emulador y queda pendiente su validacion final en un celular
+  fisico; ver [`docs/RESULTADOS_FASE_7.md`](docs/RESULTADOS_FASE_7.md).
 - La fase 4 (robustez con imagenes de campo) esta en progreso. Una prueba
   parcial con PlantDoc e iNaturalist mostro que el accuracy cae de 97.83 % a
   37.87 % fuera del dataset de laboratorio; ver

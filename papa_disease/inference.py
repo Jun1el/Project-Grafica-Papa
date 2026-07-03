@@ -21,6 +21,18 @@ def load_model(model_path: Path = MODEL_PATH):
     """
     import tensorflow as tf
     from tensorflow.keras.applications.resnet50 import preprocess_input
+    import keras
+
+    # Parche para el bug de GlorotUniform en Keras 3 al cargar H5 de ResNet
+    orig_glorot_init = keras.initializers.GlorotUniform.__init__
+    def safe_glorot_init(self, seed=None, **kwargs):
+        orig_glorot_init(self, seed=seed)
+    keras.initializers.GlorotUniform.__init__ = safe_glorot_init
+
+    orig_zeros_init = keras.initializers.Zeros.__init__
+    def safe_zeros_init(self, **kwargs):
+        orig_zeros_init(self)
+    keras.initializers.Zeros.__init__ = safe_zeros_init
 
     model_path = Path(model_path)
     if not model_path.is_file():
@@ -67,6 +79,50 @@ def predict(model, image_rgb):
     resized = cv2.resize(image_rgb, IMAGE_SIZE, interpolation=cv2.INTER_AREA)
     batch = np.expand_dims(resized.astype("float32"), axis=0)
     probabilities = np.asarray(model.predict(batch, verbose=0)[0], dtype=float)
+    if probabilities.shape != (len(CLASS_NAMES),):
+        raise ValueError("La salida del modelo no coincide con las tres clases")
+
+    index = int(np.argmax(probabilities))
+    class_name = CLASS_NAMES[index]
+    return {
+        "class_id": class_name,
+        "label": CLASS_NAMES_ES[class_name],
+        "confidence": float(probabilities[index]),
+        "probabilities": {
+            name: float(probabilities[i]) for i, name in enumerate(CLASS_NAMES)
+        },
+        "disclaimer": "Resultado educativo; no sustituye una evaluacion agronomica.",
+    }
+
+
+def load_tflite_model(model_path: Path):
+    """Carga un modelo TFLite y prepara el interprete."""
+    import tensorflow as tf
+
+    model_path = Path(model_path)
+    if not model_path.is_file():
+        raise FileNotFoundError(f"No existe el modelo TFLite: {model_path}")
+        
+    interpreter = tf.lite.Interpreter(model_path=str(model_path))
+    interpreter.allocate_tensors()
+    return interpreter
+
+
+def predict_tflite(interpreter, image_rgb):
+    """Clasifica una imagen RGB usando TFLite y devuelve el resultado."""
+    import cv2
+    import numpy as np
+
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+
+    resized = cv2.resize(image_rgb, IMAGE_SIZE, interpolation=cv2.INTER_AREA)
+    batch = np.expand_dims(resized.astype("float32"), axis=0)
+
+    interpreter.set_tensor(input_details[0]['index'], batch)
+    interpreter.invoke()
+    
+    probabilities = np.asarray(interpreter.get_tensor(output_details[0]['index'])[0], dtype=float)
     if probabilities.shape != (len(CLASS_NAMES),):
         raise ValueError("La salida del modelo no coincide con las tres clases")
 

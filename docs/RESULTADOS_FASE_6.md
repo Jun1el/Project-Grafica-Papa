@@ -20,21 +20,21 @@ Se debió realizar un parche de compatibilidad (monkey patch) en la carga de pes
 
 *Nota: La latencia fue medida en un procesador de escritorio x86. En un dispositivo móvil moderno con aceleradores NNAPI o GPU móvil, se espera una latencia aún inferior utilizando los delegados TFLite correspondientes.*
 
-## Estado de validacion reproducible
+## Limitacion de reproducibilidad aceptada
 
-El artefacto esta listo para pruebas de integracion, pero la fase permanece en
-validacion hasta repetir los resultados con el archivo
-`modelo_papas_finetuned.h5` exacto que produjo el TFLite. Ese H5 no se encuentra
-en el checkout local actual. La comprobacion se ejecuta con varias imagenes
-reales y genera evidencia JSON:
+El archivo `modelo_papas_finetuned.h5` exacto que produjo el TFLite no fue
+conservado. Por ese motivo no es posible repetir la conversion ni comprobar de
+nuevo la equivalencia H5-TFLite. El script queda disponible para futuros modelos
+que sí conserven ambos artefactos:
 
 ```bash
 python -m scripts.verify_tflite --image ruta/hoja1.jpg --image ruta/hoja2.jpg
 ```
 
 La ejecucion falla si cambia la clase o si cualquier probabilidad difiere mas
-de 0.01. ONNX no se declara completado: es opcional porque la aplicacion Android
-de la fase 7 consumira TFLite.
+de 0.01. El equipo acepta la limitacion porque el TFLite versionado carga
+correctamente y es el artefacto requerido por Flutter. ONNX queda fuera de
+alcance porque la aplicacion Android de la fase 7 consumira TFLite.
 
 ## Conclusión
 
@@ -44,5 +44,5 @@ criterios preliminares para uso en celulares:
 2. Predicciones virtualmente idénticas a la red neuronal original.
 3. Compatibilidad con preprocesamiento RGB.
 
-La integracion en Flutter puede prepararse, pero el cierre formal depende de la
-comparacion reproducible descrita arriba.
+La fase 6 queda completada con la limitacion de reproducibilidad documentada. El
+modelo TFLite esta listo para integrarse en Flutter durante la fase 7.

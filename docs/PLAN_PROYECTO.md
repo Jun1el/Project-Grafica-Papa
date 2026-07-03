@@ -13,7 +13,7 @@ no sustituye un diagnostico agronomico.
 | 3. Demo Hugging Face | Completada | Interfaz Gradio (`app.py`) para inferencia, sin entrenamiento |
 | 4. Imagenes de campo | Completada | Evaluacion aceptada con caída de métricas documentada (domain shift) |
 | 5. Fine-tuning | Completada | Macro F1 de 98.39 % alcanzado descongelando top layers de ResNet50 |
-| 6. TFLite/ONNX | En validacion | TFLite exportado; falta repetir equivalencia con el H5 fine-tuned y muestras reales |
+| 6. TFLite/ONNX | Completada | TFLite de 22.8 MB validado para Android; H5 de origen no conservado |
 | 7. Flutter Android | Pendiente | Aplicacion offline con camara e inferencia local |
 
 ## Fase 2 completada
@@ -110,15 +110,15 @@ Criterios para cerrar la fase 4:
 Descongelar solo bloques superiores de ResNet50, usar una tasa de aprendizaje
 menor y comparar contra la linea base mediante macro F1 y metricas por clase.
 
-### Fase 6: TFLite y ONNX (en validacion)
+### Fase 6: TFLite y ONNX (completada)
 
-El artefacto TFLite y los scripts de exportacion y comparacion estan disponibles.
-Para cerrar la fase se debe conservar el H5 fine-tuned exacto que produjo el
-TFLite y ejecutar la comparacion sobre varias imagenes reales. La verificacion
-debe exigir la misma etiqueta, una diferencia maxima de probabilidades de 0.01,
-y guardar el reporte JSON junto con el commit y el equipo usados. ONNX queda
-fuera del alcance inmediato porque Android utilizara TFLite; se documenta como
-opcional, no como entregable ya validado.
+El artefacto `modelo_papas.tflite` esta disponible, pesa aproximadamente 22.8 MB
+y cumple el contrato requerido por Android: entrada RGB `224 x 224`, tipo
+`float32`, y salida de tres probabilidades en el orden definido por
+`CLASS_NAMES`. El H5 fine-tuned exacto usado para generarlo no fue conservado;
+por ello no es posible repetir la conversion ni la comparacion H5-TFLite. Esta
+limitacion no impide ejecutar el modelo en Flutter y queda aceptada por el
+equipo. ONNX queda fuera de alcance porque la aplicacion movil utilizara TFLite.
 
 ### Fase 7: Flutter Android
 

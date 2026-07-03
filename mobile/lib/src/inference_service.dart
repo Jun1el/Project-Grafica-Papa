@@ -1,5 +1,4 @@
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
@@ -11,6 +10,7 @@ const int maxImagePixels = 25000000;
 
 class InferenceService {
   Interpreter? _interpreter;
+  IsolateInterpreter? _isolateInterpreter;
 
   Future<void> load() async {
     if (_interpreter != null) return;
@@ -20,46 +20,30 @@ class InferenceService {
     );
     _validateContract(interpreter);
     _interpreter = interpreter;
+    _isolateInterpreter = await IsolateInterpreter.create(
+      address: interpreter.address,
+    );
   }
 
   Future<Prediction> predict(Uint8List bytes, String fileName) async {
     _validateFile(bytes, fileName);
-    final interpreter = _interpreter;
-    if (interpreter == null) {
+    final isolateInterpreter = _isolateInterpreter;
+    if (isolateInterpreter == null) {
       throw StateError('El modelo todavía no está cargado.');
     }
 
-    final decoded = img.decodeImage(bytes);
-    if (decoded == null) {
-      throw const FormatException('No se pudo decodificar la imagen.');
-    }
-    if (decoded.width * decoded.height > maxImagePixels) {
-      throw const FormatException(
-        'La imagen supera el límite de 25 megapíxeles.',
-      );
-    }
-
-    final oriented = img.bakeOrientation(decoded);
-    final resized = img.copyResize(
-      oriented,
-      width: modelImageSize,
-      height: modelImageSize,
-      interpolation: img.Interpolation.linear,
-    );
-    final input = Float32List(modelImageSize * modelImageSize * 3);
-    var offset = 0;
-    for (final pixel in resized) {
-      input[offset++] = pixel.r.toDouble();
-      input[offset++] = pixel.g.toDouble();
-      input[offset++] = pixel.b.toDouble();
-    }
+    // El decodificado y el redimensionado se ejecutan en un isolate para no
+    // bloquear la interfaz al procesar fotos grandes en gama baja.
+    final input = await compute(_preprocessImage, bytes);
 
     final output = List<List<double>>.generate(
       1,
       (_) => List<double>.filled(modelClassLabels.length, 0),
     );
+    // La inferencia corre en el isolate de IsolateInterpreter; el cronometro
+    // mide el tiempo real percibido por el usuario, no solo el kernel TFLite.
     final stopwatch = Stopwatch()..start();
-    interpreter.run(
+    await isolateInterpreter.run(
       input.reshape(<int>[1, modelImageSize, modelImageSize, 3]),
       output,
     );
@@ -67,8 +51,10 @@ class InferenceService {
     return Prediction.fromOutput(output.single, stopwatch.elapsed);
   }
 
-  void close() {
+  Future<void> close() async {
+    await _isolateInterpreter?.close();
     _interpreter?.close();
+    _isolateInterpreter = null;
     _interpreter = null;
   }
 
@@ -111,4 +97,35 @@ class InferenceService {
       throw StateError('El modelo no cumple la salida [1,3] float32.');
     }
   }
+}
+
+/// Decodifica, corrige la orientacion EXIF y redimensiona la imagen a RGB
+/// `224 x 224`. Se ejecuta via [compute] en un isolate separado para mantener
+/// la interfaz fluida con fotos grandes.
+Float32List _preprocessImage(Uint8List bytes) {
+  final decoded = img.decodeImage(bytes);
+  if (decoded == null) {
+    throw const FormatException('No se pudo decodificar la imagen.');
+  }
+  if (decoded.width * decoded.height > maxImagePixels) {
+    throw const FormatException(
+      'La imagen supera el límite de 25 megapíxeles.',
+    );
+  }
+
+  final oriented = img.bakeOrientation(decoded);
+  final resized = img.copyResize(
+    oriented,
+    width: modelImageSize,
+    height: modelImageSize,
+    interpolation: img.Interpolation.linear,
+  );
+  final input = Float32List(modelImageSize * modelImageSize * 3);
+  var offset = 0;
+  for (final pixel in resized) {
+    input[offset++] = pixel.r.toDouble();
+    input[offset++] = pixel.g.toDouble();
+    input[offset++] = pixel.b.toDouble();
+  }
+  return input;
 }

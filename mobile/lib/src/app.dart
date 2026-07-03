@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -205,40 +206,156 @@ class _ResultCard extends StatelessWidget {
 
   String _percentage(double value) => '${(value * 100).toStringAsFixed(1)} %';
 
+  /// Color semantico por clase: verde para hoja sana, ambar y rojo para las
+  /// dos enfermedades. El orden coincide con [modelClassLabels].
+  static Color _classColor(int index) {
+    switch (index) {
+      case 2:
+        return const Color(0xff2e7d32); // Hoja sana
+      case 0:
+        return const Color(0xffef6c00); // Tizón temprano
+      default:
+        return const Color(0xffc62828); // Tizón tardío
+    }
+  }
+
+  static IconData _classIcon(int index) =>
+      index == 2 ? Icons.check_circle_outline : Icons.warning_amber_outlined;
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final conclusive = prediction.isConclusive;
+    final best = prediction.bestIndex;
+    final accent = conclusive ? _classColor(best) : theme.colorScheme.tertiary;
+
     return Card(
-      color: Theme.of(context).colorScheme.secondaryContainer,
+      color: theme.colorScheme.surfaceContainerHighest,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(
-              prediction.label,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            Row(
+              children: <Widget>[
+                Icon(
+                  conclusive ? _classIcon(best) : Icons.help_outline,
+                  color: accent,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    prediction.label,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: accent,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 4),
-            Text('Confianza: ${_percentage(prediction.confidence)}'),
-            const Divider(height: 24),
-            for (var index = 0; index < modelClassLabels.length; index++)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
+            if (conclusive)
+              Text('Confianza: ${_percentage(prediction.confidence)}')
+            else
+              Text(
+                'La confianza más alta fue ${_percentage(prediction.confidence)}, '
+                'por debajo del 70 % necesario para un resultado.',
+                style: theme.textTheme.bodyMedium,
+              ),
+            if (!conclusive) ...<Widget>[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.tertiaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Expanded(child: Text(modelClassLabels[index])),
-                    Text(_percentage(prediction.probabilities[index])),
+                    Icon(
+                      Icons.tips_and_updates_outlined,
+                      color: theme.colorScheme.onTertiaryContainer,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Probá otra foto: una sola hoja centrada, con buena '
+                        'luz natural y fondo simple.',
+                        style: TextStyle(
+                          color: theme.colorScheme.onTertiaryContainer,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-            Text(
-              'Inferencia: ${prediction.elapsed.inMilliseconds} ms',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            ],
+            const Divider(height: 24),
+            for (var index = 0; index < modelClassLabels.length; index++)
+              _ProbabilityBar(
+                label: modelClassLabels[index],
+                percentage: _percentage(prediction.probabilities[index]),
+                value: prediction.probabilities[index],
+                color: _classColor(index),
+                highlighted: index == best,
+              ),
+            if (kDebugMode) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                'Inferencia: ${prediction.elapsed.inMilliseconds} ms',
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ProbabilityBar extends StatelessWidget {
+  const _ProbabilityBar({
+    required this.label,
+    required this.percentage,
+    required this.value,
+    required this.color,
+    required this.highlighted,
+  });
+
+  final String label;
+  final String percentage;
+  final double value;
+  final Color color;
+  final bool highlighted;
+
+  @override
+  Widget build(BuildContext context) {
+    final weight = highlighted ? FontWeight.bold : FontWeight.normal;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(label, style: TextStyle(fontWeight: weight)),
+              Text(percentage, style: TextStyle(fontWeight: weight)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: value.clamp(0.0, 1.0),
+              minHeight: 8,
+              backgroundColor: color.withValues(alpha: 0.15),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+        ],
       ),
     );
   }

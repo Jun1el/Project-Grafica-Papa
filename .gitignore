@@ -15,3 +15,4 @@ resultados_fase2.zip
 revision_resultados_fase2/
 modelo_papas_resnet50_split*.h5
 modelo_papas_finetuned.h5
+.atl/

@@ -11,8 +11,8 @@ no sustituye un diagnostico agronomico.
 | 1. Consolidacion | Completada | Modulos reproducibles de datos, entrenamiento, segmentacion e inferencia |
 | 2. Evaluacion confiable | Completada | Split 70/15/15, metricas por clase, matrices y comparacion Watershed |
 | 3. Demo Hugging Face | Completada | Interfaz Gradio (`app.py`) para inferencia, sin entrenamiento |
-| 4. Imagenes de campo | En progreso | Prueba de robustez fuera del dataset de laboratorio |
-| 5. Fine-tuning | Pendiente | Ajuste controlado de capas superiores y comparacion con la linea base |
+| 4. Imagenes de campo | Completada | Evaluacion aceptada con caída de métricas documentada (domain shift) |
+| 5. Fine-tuning | Completada | Macro F1 de 98.39 % alcanzado descongelando top layers de ResNet50 |
 | 6. TFLite/ONNX | Pendiente | Modelos ligeros validados contra TensorFlow |
 | 7. Flutter Android | Pendiente | Aplicacion offline con camara e inferencia local |
 

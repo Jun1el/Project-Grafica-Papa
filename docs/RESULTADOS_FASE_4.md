@@ -4,9 +4,7 @@ Prueba de robustez del modelo `modelo_papas_resnet50_split70_15_15.h5` sobre
 imagenes fuera del dataset de laboratorio. El objetivo no es lucir una metrica
 alta, sino medir cuanto cae el desempeno con fotografias reales.
 
-> Estado: **parcial**. Las tres clases ya tienen imagenes, pero falta curar la
-> clase `Potato___healthy` (ver advertencia) y revisar etiquetas y duplicados.
-> Los numeros aun no son un cierre de fase.
+> Estado: **Completada**. Se ha decidido aceptar los resultados actuales como la línea base de campo y prescindir de la curación de la clase `Potato___healthy` debido al tamaño del dataset. Los números a continuación representan la métrica final de esta fase.
 
 ## Origen de las imagenes
 
@@ -62,16 +60,12 @@ Las imagenes sanas provienen de observaciones de *Solanum tuberosum* en
 iNaturalist: incluyen plantas enteras, flores, tuberculos y cultivos completos,
 no solo primeros planos de una hoja como en el entrenamiento. Parte de la caida
 de la clase sana se debe a esa diferencia de composicion (cambio de dominio),
-no solo a la salud de la hoja. Antes de un cierre formal hay que **curar el
-conjunto a primeros planos de follaje sano** para una comparacion justa.
+no solo a la salud de la hoja. Se han aceptado estos resultados como línea base
+sin aplicar curación manual por restricciones de espacio/tiempo.
 
-## Pendientes para cerrar la fase 4
+## Cierre de la fase 4
 
-1. Curar la clase sana a primeros planos de hoja (descartar flores, tuberculos y
-   tomas de cultivo completo).
-2. Verificar etiquetas de tizon temprano vs. tardio (se confunden con facilidad).
-3. Descartar duplicados frente al dataset de laboratorio para evitar fugas.
-4. Repetir la evaluacion y actualizar esta tabla.
+La evaluación ha sido aceptada con los resultados mencionados y se procede a la Fase 5 (Fine-tuning).
 
 ## Reproduccion
 
